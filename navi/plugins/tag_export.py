@@ -19,31 +19,31 @@ def tag_export(tag_list, filename, option):
                        "Mac Address", "Agent-UUID", "last Licensed Scan Date", 'Network', 'ACR', 'AES', 'AWS ID']
 
     # Crete a csv file object
-    with open('{}.csv'.format(filename), mode='w') as csv_file:
+    with open(f'{filename}.csv', mode='w') as csv_file:
         agent_writer = csv.writer(csv_file, delimiter=',', quotechar='"')
 
         # write our Header information first
         agent_writer.writerow(header_list)
 
         for uuid in tag_list:
-            export_list = []
-            data = db_query("SELECT * from assets where uuid='{}';".format(uuid))
+            data = db_query(f"SELECT * from assets where uuid='{uuid}';")
 
-            # SQL gives us a tuple, we need to convert it to a list.
-            for item in data[0]:
-                export_list.append(item)
-
+            export_list = list(data[0])
             if option == 1:
                 try:
                     asset_info = tio.workbenches.asset_info(uuid)
 
-                    for vuln in asset_info['counts']['vulnerabilities']['severities']:
-                        export_list.append(vuln["count"])  # Add the vuln counts to the new list
+                    export_list.extend(
+                        vuln["count"]
+                        for vuln in asset_info['counts']['vulnerabilities'][
+                            'severities'
+                        ]
+                    )
 
                 except ConnectionError:
                     click.echo("Check your API keys or your internet connection")
 
             # write to the CSV
             agent_writer.writerow(export_list)
-            print("\n{}".format(export_list))
-        click.echo("\nExport success! - {}.csv\n".format(filename))
+            print(f"\n{export_list}")
+        click.echo(f"\nExport success! - {filename}.csv\n")

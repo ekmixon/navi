@@ -162,9 +162,9 @@ def parse_data(chunk_data, chunk_number):
                     click.echo("skipped one")
         except TypeError:
             click.echo("Your Export has no data.  It may have expired")
-            click.echo("Error on Chunk {}".format(chunk_number))
+            click.echo(f"Error on Chunk {chunk_number}")
 
-    click.echo("Chunk {} Finished".format(chunk_number))
+    click.echo(f"Chunk {chunk_number} Finished")
     vuln_conn.close()
 
 
@@ -196,36 +196,30 @@ def vuln_export(days, ex_uuid, threads):
 
             # grab the export UUID
             ex_uuid = export['export_uuid']
-            click.echo('\nRequesting Vulnerability Export with ID : {}'.format(ex_uuid))
+            click.echo(f'\nRequesting Vulnerability Export with ID : {ex_uuid}')
 
-            # set a variable to True for our While loop
-            not_ready = True
         else:
             click.echo("\nUsing your Export UUID\n")
-            not_ready = True
-
+        # set a variable to True for our While loop
+        not_ready = True
         # now check the status
-        status = request_data('GET', '/vulns/export/' + ex_uuid + '/status')
+        status = request_data('GET', f'/vulns/export/{ex_uuid}/status')
 
         # status = get_data('/vulns/export/89ac18d9-d6bc-4cef-9615-2d138f1ff6d2/status')
-        click.echo("Status : {}".format(str(status["status"])))
+        click.echo(f'Status : {str(status["status"])}')
 
         # loop to check status until finished
-        while not_ready is True:
-            # Pull the status, then pause 5 seconds and ask again.
-            if status['status'] == 'PROCESSING' or 'QUEUED':
-                time.sleep(2.5)
-                status = request_data('GET', '/vulns/export/' + ex_uuid + '/status')
-                # click.echo("Status : " + str(status["status"]))
-
+        while not_ready:
+            time.sleep(2.5)
+            status = request_data('GET', f'/vulns/export/{ex_uuid}/status')
             # Exit Loop once confirmed finished
             if status['status'] == 'FINISHED':
                 ptime = time.time()
-                click.echo("\nProcessing Time took : {}".format(str(ptime - start)))
+                click.echo(f"\nProcessing Time took : {str(ptime - start)}")
 
                 # Display how many chunks there are
                 avail = status['total_chunks']
-                click.echo("\nChunks Available - {}".format(avail))
+                click.echo(f"\nChunks Available - {avail}")
                 click.echo("Downloading chunks now...hold tight...This can take some time\n")
                 not_ready = False
 
@@ -234,20 +228,22 @@ def vuln_export(days, ex_uuid, threads):
                 click.echo("Error occurred")
 
         # grab all of the chunks and craft the URLS for threading
-        for y in status['chunks_available']:
-            urls.append('/vulns/export/' + ex_uuid + '/chunks/' + str(y))
+        urls.extend(
+            f'/vulns/export/{ex_uuid}/chunks/{str(y)}'
+            for y in status['chunks_available']
+        )
 
-        for i in range(threads):
+        for _ in range(threads):
             t = threading.Thread(target=worker)
             t.daemon = True  # thread dies when main thread (only non-daemon thread) exits.
             t.start()
 
-        for item in range(len(urls)):
-            q.put(urls[item])
+        for url in urls:
+            q.put(url)
 
         q.join()
         end = time.time()
-        click.echo("Vulnerability Update Time took : {}\n".format(str(end - start)))
+        click.echo(f"Vulnerability Update Time took : {str(end - start)}\n")
 
         update_id = get_last_update_id()
         diff_dict = [update_id, str(start), str(days), "Vuln update", str(ex_uuid)]  # need to ignore if the Ex_uuid exists in the db.

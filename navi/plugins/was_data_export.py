@@ -5,13 +5,9 @@ from .api_wrapper import request_data
 
 
 def plugin_parser(plugin_output):
-    tech_list = []
     # Split the plugin information on '-'
     plugin_tuple = plugin_output.split('-')
-    # Ignore the item in the tuple and add all others to a list
-    for x in range(len(plugin_tuple) - 1):
-        tech_list.append(str(plugin_tuple[x + 1]))
-    return tech_list
+    return [str(plugin_tuple[x + 1]) for x in range(len(plugin_tuple) - 1)]
 
 
 def download_data(uuid):
@@ -157,14 +153,10 @@ def grab_scans():
         status = scan_data['status']
         # Ignore all scans that have not completed
         if status == 'completed':
-            scan_summary = []
             summary_start = scan_data['started_at']
             finish = scan_data['finalized_at']
             application = scan_data['application_uri']
             download_data(was_scan_id)
-            scan_summary.append(application)
-            scan_summary.append(was_scan_id)
-            scan_summary.append(summary_start)
-            scan_summary.append(finish)
+            scan_summary = [application, was_scan_id, summary_start, finish]
             scan_summaries.append(scan_summary)
     return

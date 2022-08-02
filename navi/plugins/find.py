@@ -9,7 +9,10 @@ tio = tenb_connection()
 
 
 def find_by_plugin(pid):
-    rows = db_query("SELECT asset_ip, asset_uuid, fqdn, network from vulns LEFT JOIN assets ON asset_uuid = uuid where plugin_id=%s" % pid)
+    rows = db_query(
+        f"SELECT asset_ip, asset_uuid, fqdn, network from vulns LEFT JOIN assets ON asset_uuid = uuid where plugin_id={pid}"
+    )
+
 
     click.echo("\n{:8s} {:16s} {:46s} {:40s} {}".format("Plugin", "IP Address", "FQDN", "UUID", "Network UUID"))
     click.echo("-" * 150)
@@ -32,19 +35,18 @@ def plugin(plugin_id, o):
     if not str.isdigit(plugin_id):
         click.echo("You didn't enter a number")
         exit()
+    elif o == "":
+        find_by_plugin(plugin_id)
+
     else:
-        if o != "":
-            click.echo("\n{:8s} {:16s} {:46s} {:40s} {}".format("Plugin", "IP Address", "FQDN", "UUID", "Network UUID"))
-            click.echo("-" * 150)
+        click.echo("\n{:8s} {:16s} {:46s} {:40s} {}".format("Plugin", "IP Address", "FQDN", "UUID", "Network UUID"))
+        click.echo("-" * 150)
 
-            plugin_data = db_query("SELECT asset_ip, asset_uuid, fqdn, network from vulns LEFT JOIN assets ON "
-                                   "asset_uuid = uuid where plugin_id='" + plugin_id + "' and output LIKE '%" + o + "%';")
+        plugin_data = db_query("SELECT asset_ip, asset_uuid, fqdn, network from vulns LEFT JOIN assets ON "
+                               "asset_uuid = uuid where plugin_id='" + plugin_id + "' and output LIKE '%" + o + "%';")
 
-            for row in plugin_data:
-                click.echo("{:8s} {:16s} {:46s} {:40s} {}".format(str(plugin_id), row[0], textwrap.shorten(row[2], 46), row[1], row[3]))
-
-        else:
-            find_by_plugin(plugin_id)
+        for row in plugin_data:
+            click.echo("{:8s} {:16s} {:46s} {:40s} {}".format(str(plugin_id), row[0], textwrap.shorten(row[2], 46), row[1], row[3]))
 
 
 @find.command(help="Find Assets that have a given CVE iD")
@@ -121,23 +123,29 @@ def webapp():
         uuid = row[1]
 
         click.echo("*" * 50)
-        click.echo("Asset IP: {}".format(row[2]))
-        click.echo("Asset UUID: {}".format(row[1]))
-        click.echo("Network UUID: {}".format(row[3]))
+        click.echo(f"Asset IP: {row[2]}")
+        click.echo(f"Asset UUID: {row[1]}")
+        click.echo(f"Network UUID: {row[3]}")
         click.echo("*" * 50)
 
-        new_row = db_query("SELECT output, port FROM vulns where plugin_id ='22964' and asset_uuid='{}';".format(uuid))
+        new_row = db_query(
+            f"SELECT output, port FROM vulns where plugin_id ='22964' and asset_uuid='{uuid}';"
+        )
+
         click.echo("\nWeb Apps Found")
         click.echo("-" * 14)
 
         for service in new_row:
             if "web" in service[0]:
                 if "through" in service[0]:
-                    click.echo("https://{}:{}".format(final_host, service[1]))
+                    click.echo(f"https://{final_host}:{service[1]}")
                 else:
-                    click.echo("http://{}:{}".format(final_host, service[1]))
+                    click.echo(f"http://{final_host}:{service[1]}")
 
-        doc_row = db_query("SELECT output, port FROM vulns where plugin_id ='93561' and asset_uuid='{}';".format(uuid))
+        doc_row = db_query(
+            f"SELECT output, port FROM vulns where plugin_id ='93561' and asset_uuid='{uuid}';"
+        )
+
 
         if doc_row:
             click.echo("\nThese web apps might be running on one or more of these containers:\n")
@@ -163,7 +171,10 @@ def creds():
 @click.argument('minute')
 def scantime(minute):
 
-    click.echo("\n*** Below are the assets that took longer than {} minutes to scan ***".format(str(minute)))
+    click.echo(
+        f"\n*** Below are the assets that took longer than {str(minute)} minutes to scan ***"
+    )
+
 
     data = db_query("SELECT asset_ip, asset_uuid, scan_started, scan_completed, scan_uuid, output from vulns where plugin_id='19506';")
 
@@ -226,8 +237,15 @@ def ghost():
                 except IndexError:
                     aws_fqdn = "No FQDN Found"
 
-                click.echo("{:11s} {:15s} {:50} {}".format(str(source['name']), str(aws_ip),
-                                                           str(aws_fqdn), source['first_seen']))
+                click.echo(
+                    "{:11s} {:15s} {:50} {}".format(
+                        str(source['name']),
+                        aws_ip,
+                        aws_fqdn,
+                        source['first_seen'],
+                    )
+                )
+
     click.echo()
 
     for gcp_assets in tio.workbenches.assets(("sources", "set-hasonly", "GCP")):
@@ -292,9 +310,7 @@ def query(statement, pipe):
     data = db_query(statement)
 
     if pipe:
-        data_list = []
-        for record in data:
-            data_list.append(record[0])
+        data_list = [record[0] for record in data]
         click.echo(data_list)
     else:
         pprint.pprint(data)
@@ -306,7 +322,7 @@ def name(plugin_name):
 
     plugin_data = db_query("SELECT asset_ip, asset_uuid, plugin_name, plugin_id from vulns where plugin_name LIKE '%" + plugin_name + "%';")
 
-    click.echo("\nThe Following assets had '{}' in the Plugin Name".format(plugin_name))
+    click.echo(f"\nThe Following assets had '{plugin_name}' in the Plugin Name")
     click.echo("\n{:8s} {:20} {:45} {:70} ".format("Plugin", "IP address", "UUID", "Plugin Name"))
     click.echo("-" * 150)
 

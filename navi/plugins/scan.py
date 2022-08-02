@@ -34,14 +34,11 @@ def get_owner_uuid(owner):
 
 
 def get_targets(scan_id):
-    get_scan_details = request_data('GET', '/scans/' + str(scan_id))
+    get_scan_details = request_data('GET', f'/scans/{str(scan_id)}')
     try:
         targets = get_scan_details['info']['targets']
-    except TypeError:
+    except (TypeError, KeyError):
         targets = ""
-    except KeyError:
-        targets = ""
-
     try:
         tag_targets = get_scan_details['info']['tag_targets']
     except TypeError:
@@ -61,9 +58,9 @@ def get_scanner_id(scan_name):
 
 def scan_details(scan_id):
     try:
-        data = request_data('GET', '/scans/' + str(scan_id))
+        data = request_data('GET', f'/scans/{str(scan_id)}')
         try:
-            click.echo("\nScan Details for Scan ID : {}\n".format(scan_id))
+            click.echo(f"\nScan Details for Scan ID : {scan_id}\n")
             click.echo("Notes: \b")
             try:
                 click.echo(data['notes'][0]['message'])
@@ -71,13 +68,13 @@ def scan_details(scan_id):
                 pass
             click.echo("\nVulnerability Counts")
             click.echo("-" * 20)
-            click.echo("Critical : {}".format(data['hosts'][0]['critical']))
-            click.echo("high : {}".format(data['hosts'][0]['high']))
-            click.echo("medium : {}".format(data['hosts'][0]['medium']))
-            click.echo("low : {}".format(data['hosts'][0]['low']))
+            click.echo(f"Critical : {data['hosts'][0]['critical']}")
+            click.echo(f"high : {data['hosts'][0]['high']}")
+            click.echo(f"medium : {data['hosts'][0]['medium']}")
+            click.echo(f"low : {data['hosts'][0]['low']}")
             try:
                 click.echo("-" * 15)
-                click.echo("Score : {}".format(data['hosts'][0]['score']))
+                click.echo(f"Score : {data['hosts'][0]['score']}")
             except IndexError:
                 pass
             click.echo("\n{:10s} {:128s} {}".format("Plugin", "Vulnerability Details", "Vuln Count"))
@@ -91,16 +88,16 @@ def scan_details(scan_id):
             click.echo("Check the scan ID")
     except Exception as E:
         click.echo("Check the scan ID\n")
-        click.echo("Error: \n {}".format(E))
+        click.echo(f"Error: \n {E}")
         exit()
 
 
 def scan_hosts(scan_id):
     try:
-        data = request_data('GET', '/scans/' + str(scan_id))
+        data = request_data('GET', f'/scans/{str(scan_id)}')
 
         try:
-            click.echo("\nHosts Found by Scan ID : {}\n".format(scan_id))
+            click.echo(f"\nHosts Found by Scan ID : {scan_id}\n")
             click.echo("{:20s} {:45s} {:10s} {:10s} {:10s} {:10s} ".format("IP Address", "UUID", "Critical", "High", "Medium", "Low"))
             click.echo("-"*150)
             for host in data['hosts']:
@@ -110,8 +107,8 @@ def scan_hosts(scan_id):
             click.echo()
         except KeyError:
             click.echo("There was an Error.  It could be the scan was Aborted, canceled or Archived.\n")
-            click.echo("Status: {}".format(data['info']['status']))
-            click.echo("Archived? {}".format(data['info']['is_archived']))
+            click.echo(f"Status: {data['info']['status']}")
+            click.echo(f"Archived? {data['info']['is_archived']}")
 
         except TypeError:
             click.echo("Check the scan ID")
@@ -151,17 +148,22 @@ def create(targets, plugin, cred, discovery, custom, scanner, policy):
         nessus_scanners()
         scanner_id = input("What scanner do you want to scan with ?.... ")
 
-    click.echo("creating your scan of : {}  Now...".format(targets))
+    click.echo(f"creating your scan of : {targets}  Now...")
 
     # Begin Payload Creation
-    payload = dict(uuid=template,
-                   settings={"name": "navi Created Scan of " + targets,
-                             "enabled": "True",
-                             "scanner_id": scanner_id,
-                             "text_targets": targets})
+    payload = dict(
+        uuid=template,
+        settings={
+            "name": f"navi Created Scan of {targets}",
+            "enabled": "True",
+            "scanner_id": scanner_id,
+            "text_targets": targets,
+        },
+    )
+
 
     if cred:
-        cred_data = request_data('GET', '/credentials/' + cred)
+        cred_data = request_data('GET', f'/credentials/{cred}')
         try:
             cred_cat_name = cred_data['category']['name']
             cred_type_name = cred_data['type']['name']
@@ -199,9 +201,9 @@ def create(targets, plugin, cred, discovery, custom, scanner, policy):
     scan_id = str(data["scan"]["id"])
 
     # launch Scan
-    request_data('POST', '/scans/' + scan_id + '/launch')
+    request_data('POST', f'/scans/{scan_id}/launch')
 
-    click.echo("I started your scan, your scan ID is: {}".format(scan_id))
+    click.echo(f"I started your scan, your scan ID is: {scan_id}")
 
 
 @scan.command(help="Start a valid Scan")
@@ -213,7 +215,7 @@ def start(scan_id):
 @scan.command(help="Get Scan Status")
 @click.argument('Scan_id')
 def status(scan_id):
-    click.echo("\nLast Status update : {}\n".format(tio.scans.status(scan_id)))
+    click.echo(f"\nLast Status update : {tio.scans.status(scan_id)}\n")
 
 
 @scan.command(help="Resume a paused Scan")
@@ -272,9 +274,9 @@ def change(owner, new, who, v):
                                                      "scanner_id": get_scanner_id(scanner_name)
                                                      })
 
-            request_data('PUT', '/scans/' + str(scan_id), payload=payload)
+            request_data('PUT', f'/scans/{str(scan_id)}', payload=payload)
             if v:
-                click.echo("\nDone - Payload: {}".format(str(payload)))
+                click.echo(f"\nDone - Payload: {payload}")
 
 
 @scan.command(help="Display Scan Details")
@@ -319,7 +321,7 @@ def latest():
 
         # turn epoch time into something readable
         epock_latest = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime(grab_time))
-        click.echo("\nThe last Scan run was at {}".format(epock_latest))
+        click.echo(f"\nThe last Scan run was at {epock_latest}")
         scan_details(str(grab_uuid))
     except Exception as E:
         error_msg(E)
@@ -374,7 +376,7 @@ def move(a, s, limit, scanid):
                 click.echo("Exporting Scan ID:{}, with history_id: {} now\n".format(history_ids, move_scans))
 
                 # export the scan
-                with open('{}.nessus'.format(str(scan_name)), 'wb') as nessus:
+                with open('{}.nessus'.format(scan_name), 'wb') as nessus:
                     src.scans.export(history_ids, fobj=nessus)
 
                 nessus.close()
@@ -382,12 +384,12 @@ def move(a, s, limit, scanid):
                 click.echo("Importing Scan ID: {}, with history_id: {} now\n".format(history_ids, move_scans))
 
                 # import the scan
-                with open('{}.nessus'.format(str(scan_name)), 'rb') as file:
+                with open('{}.nessus'.format(scan_name), 'rb') as file:
                     dst.scans.import_scan(fobj=file)
                 file.close()
 
                 # delete the scan
-                os.remove('{}.nessus'.format(str(scan_name)))
+                os.remove('{}.nessus'.format(scan_name))
 
     if scanid:
         single_scan = [scanid]
@@ -420,18 +422,18 @@ def bridge(un, pw, host, scanid, repoid, a, s):
         sc.login(access_key=a, secret_key=s)
 
     try:
-        click.echo("\nExporting your Scan ID: {} now\n".format(scanid))
+        click.echo(f"\nExporting your Scan ID: {scanid} now\n")
 
-        with open('{}.nessus'.format(str(scanid)), 'wb') as nessus:
+        with open(f'{str(scanid)}.nessus', 'wb') as nessus:
             tio.scans.export(scanid, fobj=nessus)
 
-        click.echo("Importing your Scan into Repo {} at https://{}\n".format(repoid, host))
+        click.echo(f"Importing your Scan into Repo {repoid} at https://{host}\n")
 
-        with open('{}.nessus'.format(str(scanid))) as file:
+        with open(f'{str(scanid)}.nessus') as file:
             sc.scan_instances.import_scan(file, repoid)
 
         # delete the scan
-        os.remove('{}.nessus'.format(str(scanid)))
+        os.remove(f'{str(scanid)}.nessus')
     except:
         pass
 

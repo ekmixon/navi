@@ -33,14 +33,14 @@ def network():
 @click.option("--age", default='', required=True, help="Change the Asset Age Out - 90days or more")
 @click.option("--net", default='', required=True, help="Select Network ID")
 def change(age, net):
-    click.echo("\nChanging the age to {}\n".format(age))
+    click.echo(f"\nChanging the age to {age}\n")
 
     if age != '' and net != '' and len(net) == 36:
         if 1 <= int(age) <= 365:
-            network_data = request_data('GET', '/networks/' + net)
+            network_data = request_data('GET', f'/networks/{net}')
             name = network_data['name']
             payload = {"assets_ttl_days": age, "name": name, "description": "TTL adjusted by navi"}
-            request_data('PUT', '/networks/' + net, payload=payload)
+            request_data('PUT', f'/networks/{net}', payload=payload)
         else:
             click.echo("Asset Age Out number must between 1 and 365")
     else:
@@ -51,7 +51,7 @@ def change(age, net):
 @click.option("--name", default='', required=True, help="Create a Network with the Following Name")
 @click.option("--description", "--d", default='Navi Created', help="Create a description for your Network")
 def new(name, description):
-    click.echo("\nCreating a new network named {}\n".format(name))
+    click.echo(f"\nCreating a new network named {name}\n")
 
     if name != '':
         tio.networks.create(name, description=description)
@@ -92,20 +92,10 @@ def move(net, scanner, c, v, source, target):
     ip_list = ""
     if scanner != '':
         # Here I just want to check to see if its a uuid. If it's not 36 chars long, its not a uuid.
-        if len(net) != 36:
-            network_id = get_network_id(net)
-        else:
-            network_id = net
-
+        network_id = get_network_id(net) if len(net) != 36 else net
         # Scanner UUIDs have two lengths, both over 35. This isn't bullet proof but it's good enough for now.
         # I expect a lot from users. :)
-        if len(scanner) > 35:
-            # This should be a uuid.
-            scanner_id = scanner
-        else:
-            # Lets grab the uuid
-            scanner_id = get_scanner_id(scanner)
-
+        scanner_id = scanner if len(scanner) > 35 else get_scanner_id(scanner)
         # move the scanner
         tio.networks.assign_scanners(network_id, scanner_id)
 
@@ -121,19 +111,19 @@ def move(net, scanner, c, v, source, target):
         # then grab the Scanned IP from the vulns table using the UUID as a Key; then put the IPs in a list
         ip_list = ""
         for item in tag_uuid_list:
-            ip_address = db_query("select asset_ip from vulns where asset_uuid='{}'".format(item))
+            ip_address = db_query(f"select asset_ip from vulns where asset_uuid='{item}'")
 
             try:
                 ip = ip_address[0][0]
                 if ip not in ip_list:
-                    ip_list = ip_list + "," + ip
+                    ip_list = f"{ip_list},{ip}"
             except IndexError:
                 pass
 
     if target:
-        ip_list = ip_list + "," + target
+        ip_list = f"{ip_list},{target}"
 
     # Current limit is 1999 assets to be moved at once
     payload = {"source": source, "destination": net, "targets": ip_list[1:]}
     request_data("POST", '/api/v2/assets/bulk-jobs/move-to-network', payload=payload)
-    click.echo("\nMoving these assets \n {}".format(ip_list[1:]))
+    click.echo(f"\nMoving these assets \n {ip_list[1:]}")

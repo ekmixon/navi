@@ -16,18 +16,18 @@ def was_export():
         data = request_data('GET', '/was/v2/scans', params=params)
 
         for scan_data in data['data']:
-            csv_list = []
             was_scan_id = scan_data['scan_id']
             status = scan_data['status']
-            start = scan_data['started_at']
-            finish = scan_data['finalized_at']
-
             # Ignore all scans that have not completed
             if status == 'completed':
-                report = request_data('GET', '/was/v2/scans/' + was_scan_id + '/report')
+                start = scan_data['started_at']
+                finish = scan_data['finalized_at']
+
+                report = request_data('GET', f'/was/v2/scans/{was_scan_id}/report')
                 high = []
                 medium = []
                 low = []
+                csv_list = []
                 try:
                     name = report['config']['name']
                     try:
@@ -47,20 +47,25 @@ def was_export():
                         plugin_id = finding['plugin_id']
                         if risk == 'high':
                             high.append(plugin_id)
-                        elif risk == 'medium':
-                            medium.append(plugin_id)
                         elif risk == 'low':
                             low.append(plugin_id)
 
-                    csv_list.append(name)
-                    csv_list.append(target)
-                    csv_list.append(len(high))
-                    csv_list.append(len(medium))
-                    csv_list.append(len(low))
-                    csv_list.append(start)
-                    csv_list.append(finish)
-                    csv_list.append(title)
-                    csv_list.append(message)
+                        elif risk == 'medium':
+                            medium.append(plugin_id)
+                    csv_list.extend(
+                        (
+                            name,
+                            target,
+                            len(high),
+                            len(medium),
+                            len(low),
+                            start,
+                            finish,
+                            title,
+                            message,
+                        )
+                    )
+
                     agent_writer.writerow(csv_list)
                 except TypeError as E:
                     print(E)

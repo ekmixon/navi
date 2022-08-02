@@ -45,11 +45,11 @@ def add(ip, mac, netbios, fqdn, hostname, file, source):
             # create Payload
             payload = {"assets": [asset], "source": source}
 
-            click.echo("Adding the following Data : \n{}\n".format(payload))
+            click.echo(f"Adding the following Data : \n{payload}\n")
 
             # request Import Job
             data = request_data('POST', '/import/assets', payload=payload)
-            click.echo("Your Import ID is : {}".format(data['asset_import_job_uuid']))
+            click.echo(f"Your Import ID is : {data['asset_import_job_uuid']}")
         else:
             click.echo("\nYou need to supply some information\n")
     except Error:

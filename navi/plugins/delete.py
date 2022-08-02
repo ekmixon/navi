@@ -13,12 +13,19 @@ def delete():
 @delete.command(help="Delete assets by Tag: tag_category:tag_value - Example - OS:Linux")
 @click.argument('tag_string')
 def bytag(tag_string):
-    tag_tuple = tag_string.split(':')
-    cat = tag_tuple[0]
-    val = tag_tuple[1]
     if bytag != '':
+        tag_tuple = tag_string.split(':')
+        cat = tag_tuple[0]
+        val = tag_tuple[1]
         click.echo("\nI'm deleting all of the assets associated with your Tag\n")
-        payload = {'query': {'field': "tag.{}".format(cat), 'operator': 'set-has', 'value': str(val)}}
+        payload = {
+            'query': {
+                'field': f"tag.{cat}",
+                'operator': 'set-has',
+                'value': str(val),
+            }
+        }
+
         request_data('POST', '/api/v2/assets/bulk-jobs/delete', payload=payload)
 
 
@@ -61,7 +68,7 @@ def asset(tid):
 @click.argument('tid')
 def container(tid):
     click.echo("\nI'm deleting your container")
-    request_no_response('DELETE', '/container-security/api/v2/images/' + str(tid))
+    request_no_response('DELETE', f'/container-security/api/v2/images/{str(tid)}')
 
 
 @delete.command(help='Delete Tag Value by Value UUID')
@@ -82,7 +89,7 @@ def category(tid):
 @click.argument('tid')
 def repository(tid):
     click.echo("\nI'm Deleting your Repository")
-    request_no_response('delete', '/container-security/api/v2/' + str(tid))
+    request_no_response('delete', f'/container-security/api/v2/{str(tid)}')
 
 
 @delete.command(help='Delete a user by User ID - Not UUID')
@@ -105,10 +112,9 @@ def usergroup(tid):
 def tag(c, v):
     tagdata = request_data('GET', '/tags/values')
     for tags in tagdata['values']:
-        if c == tags['category_name']:
-            if v == tags['value']:
-                value_uuid = tags['uuid']
-                request_no_response('DELETE', '/tags/values/' + str(value_uuid))
+        if c == tags['category_name'] and v == tags['value']:
+            value_uuid = tags['uuid']
+            request_no_response('DELETE', f'/tags/values/{str(value_uuid)}')
 
 
 @delete.command(help='Delete a Access group by Access Group ID')

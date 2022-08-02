@@ -7,7 +7,7 @@ from .th_compliance_export import compliance_export
 
 def threads_check(threads):
     if threads != 10:  # Limit the amount of threads to avoid issues
-        click.echo("\nUsing {} thread(s) at your request".format(threads))
+        click.echo(f"\nUsing {threads} thread(s) at your request")
         if threads not in range(1, 11):
             click.echo("Enter a value between 1 and 10")
             exit()

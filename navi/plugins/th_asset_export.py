@@ -110,15 +110,9 @@ def parse_data(chunk_data):
                 tag_ip = assets['ipv4s'][0]
                 tag_asset_id = assets['id']
                 for t in assets["tags"]:
-                    tag_list = []
                     tag_id = tag_id + 1
-                    tag_list.append(tag_id)
-                    tag_list.append(tag_asset_id)
-                    tag_list.append(tag_ip)
-
                     tag_key = t['key']
-                    tag_list.append(tag_key)
-
+                    tag_list = [tag_id, tag_asset_id, tag_ip, tag_key]
                     tag_uuid = t['uuid']
                     tag_list.append(tag_uuid)
 
@@ -166,7 +160,7 @@ def asset_export(days, ex_uuid, threads):
 
             # grab the export UUID
             ex_uuid = export['export_uuid']
-            click.echo('\nRequesting Asset Export with ID : {}'.format(ex_uuid))
+            click.echo(f'\nRequesting Asset Export with ID : {ex_uuid}')
 
             # set a variable to True for our While loop
             not_ready = True
@@ -175,23 +169,19 @@ def asset_export(days, ex_uuid, threads):
             not_ready = False
 
         # now check the status
-        status = request_data('GET', '/assets/export/' + ex_uuid + '/status')
+        status = request_data('GET', f'/assets/export/{ex_uuid}/status')
 
         # status = get_data('/vulns/export/89ac18d9-d6bc-4cef-9615-2d138f1ffsdf/status')
-        click.echo("Status : {}".format(str(status["status"])))
+        click.echo(f'Status : {str(status["status"])}')
 
         # loop to check status until finished
-        while not_ready is True:
-            # Pull the status, then pause 5 seconds and ask again.
-            if status['status'] == 'PROCESSING' or 'QUEUED':
-                time.sleep(2.5)
-                status = request_data('GET', '/assets/export/' + ex_uuid + '/status')
-                # click.echo("Status : " + str(status["status"]))
-
+        while not_ready:
+            time.sleep(2.5)
+            status = request_data('GET', f'/assets/export/{ex_uuid}/status')
             # Exit Loop once confirmed finished
             if status['status'] == 'FINISHED':
                 ptime = time.time()
-                click.echo("\nProcessing Time took : {}".format(str(ptime - start)))
+                click.echo(f"\nProcessing Time took : {str(ptime - start)}")
                 not_ready = False
 
             # Tell the user an error occured
@@ -203,22 +193,24 @@ def asset_export(days, ex_uuid, threads):
 
         # grab all of the chunks and craft the URLS for threading
 
-        for y in status['chunks_available']:
-            urls.append('/assets/export/' + ex_uuid + '/chunks/' + str(y))
+        urls.extend(
+            f'/assets/export/{ex_uuid}/chunks/{str(y)}'
+            for y in status['chunks_available']
+        )
 
-        for i in range(threads):
+        for _ in range(threads):
             t = threading.Thread(target=worker)
             t.daemon = True  # thread dies when main thread (only non-daemon thread) exits.
             t.start()
 
         # stuff work items on the queue (in this case, just a number).
         # start = time.perf_counter()
-        for item in range(len(urls)):
-            q.put(urls[item])
+        for url in urls:
+            q.put(url)
 
         q.join()
         end = time.time()
-        click.echo("Asset Download took: {}\n".format(str(end - start)))
+        click.echo(f"Asset Download took: {str(end - start)}\n")
 
         # Now that the download has completed we need to record it
         update_id = get_last_update_id()

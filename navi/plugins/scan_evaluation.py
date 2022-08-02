@@ -6,11 +6,10 @@ import csv
 
 
 def grab_hop_count(uuid):
-    # grab the output of 10287 - Trace Route
-    hop_count_data = db_query("select output from vulns where asset_uuid='{}' and plugin_id='10287';".format(uuid))
-
     # Send the raw data back
-    return hop_count_data
+    return db_query(
+        f"select output from vulns where asset_uuid='{uuid}' and plugin_id='10287';"
+    )
 
 
 @click.command(help="Evaluate Scan times")

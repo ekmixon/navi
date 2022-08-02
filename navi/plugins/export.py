@@ -20,7 +20,7 @@ def export():
 @export.command(help="Export All Asset data in the Navi Database to a CSV")
 @click.option('--file', default="asset_data", help="Name of the file excluding 'csv'")
 def assets(file):
-    click.echo("\nExporting your data now. Saving {}.csv now...\n".format(file))
+    click.echo(f"\nExporting your data now. Saving {file}.csv now...\n")
     asset_query = "select * from assets;"
     query_export(asset_query, file)
 
@@ -40,7 +40,7 @@ def consec():
 @export.command(help="Export Licensed Assets into a CSV")
 @click.option('--file', default="licensed_data", help="Name of the file excluding 'csv'")
 def licensed(file):
-    click.echo("\nExporting your data now. Saving {}.csv now...\n".format(file))
+    click.echo(f"\nExporting your data now. Saving {file}.csv now...\n")
     licensed_query = "SELECT ip_address, fqdn, uuid, last_licensed_scan_date from assets where last_licensed_scan_date != ' ';"
     query_export(licensed_query, file)
 
@@ -52,11 +52,11 @@ def lumin(v, file):
 
     if v:
         click.echo("\nExporting your data now. This could take some time.  300 Assets per minute max.")
-        click.echo("Saving {}.csv now...\n".format(file))
+        click.echo(f"Saving {file}.csv now...\n")
         lumin_export()
     else:
         click.echo("\nExporting your data now.")
-        click.echo("Saving {}.csv now...\n".format(file))
+        click.echo(f"Saving {file}.csv now...\n")
         asset_query = "select * from assets;"
         query_export(asset_query, file)
 
@@ -65,8 +65,8 @@ def lumin(v, file):
 @click.argument('network_uuid')
 @click.option('--file', default="network_data", help="Name of the file excluding 'csv'")
 def network(network_uuid, file):
-    click.echo("\nExporting your data now. Saving {}.csv now...".format(file))
-    network_query = "SELECT * from assets where network=='{}';".format(network_uuid)
+    click.echo(f"\nExporting your data now. Saving {file}.csv now...")
+    network_query = f"SELECT * from assets where network=='{network_uuid}';"
     query_export(network_query, file)
 
 
@@ -110,22 +110,18 @@ def bytag(c, v, ec, ev, file, vulncounts, severity):
     if vulncounts:
         # Tell the export to pull verbose data - vunlcounts
         tag_export(new_list, file, 1)
-    else:
-        if severity:
+    elif severity:
             # If Severity is chosen then we will export vuln details
-            if len(severity) == 1:
-                # multiple choice values are returned as a tuple.
-                # Here I break it out and put it in the format needed for sql
-                asset_query = "select * from vulns where severity in ('{}');".format(severity[0])
-                query_export(asset_query, file)
-            else:
-                # Here I just send the tuple in the query
-                asset_query = "select * from vulns where severity in {};".format(severity)
-                query_export(asset_query, file)
+        asset_query = (
+            f"select * from vulns where severity in ('{severity[0]}');"
+            if len(severity) == 1
+            else f"select * from vulns where severity in {severity};"
+        )
 
-        else:
-            # if Severity or vulncounts were not chosen we will export asset data from navi.db
-            tag_export(new_list, file, 0)
+        query_export(asset_query, file)
+    else:
+        # if Severity or vulncounts were not chosen we will export asset data from navi.db
+        tag_export(new_list, file, 0)
 
 
 @export.command(help="Export Webapp Scan Summary into a CSV - WAS V2")
@@ -154,17 +150,17 @@ def compliance(name, uuid, file):
 @click.option('--file', default="vuln_data", help="Name of the file excluding '.csv'")
 @click.option('--severity', type=click.Choice(['critical', 'high', 'medium', 'low', 'info'], case_sensitive=False), multiple=True)
 def vulns(file, severity):
-    click.echo("\nExporting your data now. Saving {}.csv now...\n".format(file))
+    click.echo(f"\nExporting your data now. Saving {file}.csv now...\n")
 
     if severity:
 
         if len(severity) == 1:
             # multiple choice values are returned as a tuple.
             # Here I break it out and put it in the format needed for sql
-            asset_query = "select * from vulns where severity in ('{}');".format(severity[0])
+            asset_query = f"select * from vulns where severity in ('{severity[0]}');"
         else:
             # Here I just send the tuple in the query
-            asset_query = "select * from vulns where severity in {};".format(severity)
+            asset_query = f"select * from vulns where severity in {severity};"
     else:
         asset_query = "select * from vulns;"
 

@@ -5,20 +5,17 @@ from .user import get_user_id
 
 def create_group(group_name):
     payload = {'name': group_name}
-    # Using the Delete request because of an API Return issue.
-    data = request_no_response("POST", "/groups", payload=payload)
-
-    return data
+    return request_no_response("POST", "/groups", payload=payload)
 
 
 def add_users(user_id, group_id):
-    url = "/groups/{}/users/{}".format(group_id, user_id)
+    url = f"/groups/{group_id}/users/{user_id}"
     # Using the Delete request because of an API Return issue.
     request_no_response("POST", url)
 
 
 def remove_user(user_id, group_id):
-    url = "/groups/{}/users/{}".format(group_id, user_id)
+    url = f"/groups/{group_id}/users/{user_id}"
     # Using the Delete request because of an API Return issue.
     request_no_response("DELETE", url)
 
@@ -46,7 +43,7 @@ def create(name):
     if group_id == 0:
         create_group(name)
     else:
-        print("Your Group already exists. Hers the group id {}".format(group_id))
+        print(f"Your Group already exists. Hers the group id {group_id}")
 
 
 @usergroup.command(help="Add a User to a user group")

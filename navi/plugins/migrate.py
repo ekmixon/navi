@@ -49,17 +49,16 @@ def migrate(region, a, s):
     # Send the data to get organized into a neat dictionary of Lists
     aws_organized_tags = organize_aws_keys(aws_ec2)
 
+    description = "AWS Tag by Navi"
+
     # Grab the Key, value and the new list out of the dict to send to the tagging function
     for key, value in aws_organized_tags.items():
         for z, w in value.items():
             uuid_list = []
             for instance in w:
                 # Look up the UUID of the asset
-                db = db_query("select uuid from assets where aws_id='{}';".format(instance))
-                for record in db:
-                    uuid_list.append(record[0])
-            description = "AWS Tag by Navi"
-
-            print("Creating a Tag named - {} : {} - with the following ids {}".format(key, z, w))
+                db = db_query(f"select uuid from assets where aws_id='{instance}';")
+                uuid_list.extend(record[0] for record in db)
+            print(f"Creating a Tag named - {key} : {z} - with the following ids {w}")
 
             tag_by_uuid(uuid_list, key, z, description)

@@ -49,10 +49,7 @@ def agroup(name, c, v, user, usergroup, perm):
 
     assets = db_query("SELECT tag_uuid from tags where tag_key='" + c + "' and tag_value='" + v + "';")
 
-    # Grab the first UUID...UUIDs returned are duplicates due to the db structure
-    tag_uuid = [assets[0][0]]
-
-    if tag_uuid:
+    if tag_uuid := [assets[0][0]]:
         payload = {"name": str(name), "access_group_type": "MANAGE_ASSETS", "rules": [{"type": "tag_uuid", "operator": "set-has", "terms": tag_uuid}],
                    "principals": [{"permissions": permission, "type": permtype, "principal_name": choice}]}
 
@@ -63,12 +60,21 @@ def agroup(name, c, v, user, usergroup, perm):
             # Check to see if the list has any IPs in it.
             if answer == 'no':
                 new_access_group = request_data('POST', '/v2/access-groups', payload=payload)
-                click.echo("\nYour Access group {} is being created now \n".format(new_access_group['name']))
-                click.echo("The UUID is {} \n".format(new_access_group['id']))
+                click.echo(
+                    f"\nYour Access group {new_access_group['name']} is being created now \n"
+                )
+
+                click.echo(f"The UUID is {new_access_group['id']} \n")
             else:
-                update_group = request_data('PUT', '/v2/access-groups/' + str(answer), payload=payload)
-                click.echo("\nYour Access group {} is being updated now \n".format(update_group['name']))
-                click.echo("The UUID is {} \n".format(update_group['id']))
+                update_group = request_data(
+                    'PUT', f'/v2/access-groups/{str(answer)}', payload=payload
+                )
+
+                click.echo(
+                    f"\nYour Access group {update_group['name']} is being updated now \n"
+                )
+
+                click.echo(f"The UUID is {update_group['id']} \n")
         except TypeError as E:
             click.echo("\nAccess group? - Check the Username")
             click.echo(E)

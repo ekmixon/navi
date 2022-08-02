@@ -32,41 +32,49 @@ def tag_by_tag(c, v, d, cv, cc, match):
                 # Need to grab the Tag UUID of our Parent Tag so we can get more details
                 tag_data = request_data('GET', '/tags/values')
                 for value in tag_data['values']:
-                    if value['category_name'] == str(c):
-                        if value['value'] == str(v):
-                            try:
-                                tag_uuid = value['uuid']
+                    if value['category_name'] == str(c) and value[
+                        'value'
+                    ] == str(v):
+                        try:
+                            tag_uuid = value['uuid']
 
                                 # Get filter details
-                                current_rule_set = request_data("GET", "/tags/values/" + tag_uuid)
+                            current_rule_set = request_data("GET", f"/tags/values/{tag_uuid}")
 
-                                # The filter is a string in the API, pull out the dictionary representation and
-                                filter_string = current_rule_set['filters']['asset']
+                            # The filter is a string in the API, pull out the dictionary representation and
+                            filter_string = current_rule_set['filters']['asset']
 
-                                # Turn the string into a dictionary
-                                rule_set_dict = eval(filter_string)
+                            # Turn the string into a dictionary
+                            rule_set_dict = eval(filter_string)
 
-                                # Identify 'or' vs 'and' and set the current filter list to our 'rule_list'
-                                try:
-                                    rules_list = rule_set_dict['and']
-                                    match = 'and'
-                                except KeyError:
-                                    rules_list = rule_set_dict['or']
-                                    match = 'or'
+                            # Identify 'or' vs 'and' and set the current filter list to our 'rule_list'
+                            try:
+                                rules_list = rule_set_dict['and']
+                                match = 'and'
+                            except KeyError:
+                                rules_list = rule_set_dict['or']
+                                match = 'or'
 
-                                rules_list.append({"field": "tag.{}".format(cc), "operator": "set-has", "value": str(cv)})
-                            except Exception as F:
-                                click.echo(F)
+                            rules_list.append(
+                                {
+                                    "field": f"tag.{cc}",
+                                    "operator": "set-has",
+                                    "value": str(cv),
+                                }
+                            )
+
+                        except Exception as F:
+                            click.echo(F)
 
                 payload = {"category_name": str(c), "value": str(v), "description": str(d), "filters": {"asset": {str(match): rules_list}}}
                 # Update the Parent Tag with the new child tag information
-                data = request_data('PUT', '/tags/values/' + tag_uuid, payload=payload)
+                data = request_data('PUT', f'/tags/values/{tag_uuid}', payload=payload)
 
                 value_uuid = data["uuid"]
                 cat_uuid = data['category_uuid']
-                click.echo("\nI've Updated your Tag - {} : {}\n".format(c, v))
-                click.echo("The Category UUID is : {}\n".format(cat_uuid))
-                click.echo("The Value UUID is : {}\n".format(value_uuid))
+                click.echo(f"\nI've Updated your Tag - {c} : {v}\n")
+                click.echo(f"The Category UUID is : {cat_uuid}\n")
+                click.echo(f"The Value UUID is : {value_uuid}\n")
             except Exception as E:
                 click.echo(E)
         else:
@@ -79,15 +87,30 @@ def tag_by_tag(c, v, d, cv, cc, match):
         if child_answer == 'yes':
             # if the child tag does exist, then create the new tag with the existing tag as a child
             try:
-                payload = {"category_name": str(c), "value": str(v), "description": str(d), "filters":
-                           {"asset": {str(match): [{"field": "tag.{}".format(cc), "operator": "set-has", "value": str(cv)}]}}}
+                payload = {
+                    "category_name": str(c),
+                    "value": str(v),
+                    "description": str(d),
+                    "filters": {
+                        "asset": {
+                            str(match): [
+                                {
+                                    "field": f"tag.{cc}",
+                                    "operator": "set-has",
+                                    "value": str(cv),
+                                }
+                            ]
+                        }
+                    },
+                }
+
                 data = request_data('POST', '/tags/values', payload=payload)
 
                 value_uuid = data["uuid"]
                 cat_uuid = data['category_uuid']
-                click.echo("\nI've created your new Tag - {} : {}\n".format(c, v))
-                click.echo("The Category UUID is : {}\n".format(cat_uuid))
-                click.echo("The Value UUID is : {}\n".format(value_uuid))
+                click.echo(f"\nI've created your new Tag - {c} : {v}\n")
+                click.echo(f"The Category UUID is : {cat_uuid}\n")
+                click.echo(f"The Value UUID is : {value_uuid}\n")
 
             except Exception as F:
                 click.echo(F)
@@ -104,10 +127,10 @@ def tag_by_ip(ip_list, tag_list, c, v, d):
         try:
             value_uuid = data["uuid"]
             cat_uuid = data['category_uuid']
-            click.echo("\nI've created your new Tag - {} : {}\n".format(c, v))
-            click.echo("The Category UUID is : {}\n".format(cat_uuid))
-            click.echo("The Value UUID is : {}\n".format(value_uuid))
-            click.echo("{} IPs added to the Tag".format(str(len(tag_list))))
+            click.echo(f"\nI've created your new Tag - {c} : {v}\n")
+            click.echo(f"The Category UUID is : {cat_uuid}\n")
+            click.echo(f"The Value UUID is : {value_uuid}\n")
+            click.echo(f"{len(tag_list)} IPs added to the Tag")
         except Exception as E:
             click.echo("Duplicate Tag Category: You may need to delete your tag first\n")
             click.echo("We could not confirm your tag name, is it named weird?\n")
@@ -127,9 +150,9 @@ def tag_by_tenable_uuid(tag_list, c, v, d):
         try:
             value_uuid = data["uuid"]
             cat_uuid = data['category_uuid']
-            click.echo("\nI've created your new Tag - {} : {}\n".format(c, v))
-            click.echo("The Category UUID is : {}\n".format(cat_uuid))
-            click.echo("The Value UUID is : {}\n".format(value_uuid))
+            click.echo(f"\nI've created your new Tag - {c} : {v}\n")
+            click.echo(f"The Category UUID is : {cat_uuid}\n")
+            click.echo(f"The Value UUID is : {value_uuid}\n")
         except Exception as E:
             click.echo("Duplicate Tag Category: You may need to delete your tag first\n")
             click.echo("We could not confirm your tag name, is it named weird?\n")

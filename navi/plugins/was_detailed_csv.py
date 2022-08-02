@@ -21,7 +21,7 @@ def was_detailed_export():
 
             # Ignore all scans that have not completed
             if status == 'completed':
-                report = request_data('GET', '/was/v2/scans/' + was_scan_id + '/report')
+                report = request_data('GET', f'/was/v2/scans/{was_scan_id}/report')
 
                 try:
                     name = report['config']['name']
@@ -32,8 +32,6 @@ def was_detailed_export():
                         target = report['config']['settings']['target']
 
                     for finding in report['findings']:
-                        csv_list = []
-                        owasp_list = []
                         description = finding['description']
                         try:
                             solution = finding['solution']
@@ -66,31 +64,34 @@ def was_detailed_export():
                         except KeyError:
                             wasc = ''
 
-                        # Grab multiples values here
-                        for owasp in finding['owasp']:
-                            if owasp['year'] == '2017':
-                                owasp_list.append(owasp['category'])
+                        owasp_list = [
+                            owasp['category']
+                            for owasp in finding['owasp']
+                            if owasp['year'] == '2017'
+                        ]
 
                         # ignore info vulns
                         if risk != "info":
                             plugin_id = finding['plugin_id']
                             plugin_name = finding['name']
 
-                            csv_list.append(name)
-                            csv_list.append(target)
-                            csv_list.append(risk)
-                            csv_list.append(plugin_id)
-                            csv_list.append(plugin_name)
-                            csv_list.append(description)
-                            csv_list.append(solution)
-                            csv_list.append(see_also)
-                            csv_list.append(cvss)
-                            csv_list.append(cvss3)
-                            csv_list.append(cves)
-                            csv_list.append(cwe)
-                            csv_list.append(wasc)
-                            csv_list.append(owasp_list)
-                            csv_list.append(finalized)
+                            csv_list = [
+                                name,
+                                target,
+                                risk,
+                                plugin_id,
+                                plugin_name,
+                                description,
+                                solution,
+                                see_also,
+                                cvss,
+                                cvss3,
+                                cves,
+                                cwe,
+                                wasc,
+                                owasp_list,
+                                finalized,
+                            ]
 
                             agent_writer.writerow(csv_list)
                 except TypeError:

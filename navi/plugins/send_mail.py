@@ -30,7 +30,7 @@ def send_attachment(from_email, to_email, mail_server, password, port, filename,
             # encode into base64
             encoders.encode_base64(p)
 
-            p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+            p.add_header('Content-Disposition', f"attachment; filename= {filename}")
 
             # attach the instance 'p' to instance 'msg'
             msg2.attach(p)

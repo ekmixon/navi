@@ -38,14 +38,17 @@ def create_target_group(target_name, tg_list):
         click.echo("\nYour request returned zero results\nAs a result, nothing happened\n")
         exit()
 
-    click.echo("\nThese are the IPs that will be added to the target Group: {}".format(target_name))
+    click.echo(
+        f"\nThese are the IPs that will be added to the target Group: {target_name}"
+    )
+
     click.echo(tg_list)
     click.echo()
 
     if group_id != 0:
         # Update current Target Group
         payload = {"name": target_name, "members": trgstring, "type": "system"}
-        request_data("PUT", '/target-groups/'+str(group_id), payload=payload)
+        request_data("PUT", f'/target-groups/{str(group_id)}', payload=payload)
     else:
         # Create a New Target Group
         payload = {"name": target_name, "members": str(trgstring), "type": "system", "acls": [{"type": "default", "permissions": 64}]}
@@ -106,20 +109,36 @@ def tgroup(name, ip, aws, gcp, azure, days, priv, pub, migrate):
 
         tgroups = request_data('GET', '/target-groups')
 
+        d = "Imported by Script"
         for group in tgroups['target_groups']:
             member = group['members']
             name = group['name']
             group_type = group['type']
-            d = "Imported by Script"
             try:
                 if name != 'Default':
-                    payload = {"category_name": str(group_type), "value": str(name), "description": str(d), "filters": {"asset": {"and": [{"field": "ipv4", "operator": "eq", "value": str(member)}]}}}
+                    payload = {
+                        "category_name": str(group_type),
+                        "value": str(name),
+                        "description": d,
+                        "filters": {
+                            "asset": {
+                                "and": [
+                                    {
+                                        "field": "ipv4",
+                                        "operator": "eq",
+                                        "value": str(member),
+                                    }
+                                ]
+                            }
+                        },
+                    }
+
                     data = request_data('POST', '/tags/values', payload=payload)
 
                     value_uuid = data["uuid"]
                     cat_uuid = data['category_uuid']
-                    print("\nI've created your new Tag - {} : {}\n".format(group_type, name))
-                    print("The Category UUID is : {}\n".format(cat_uuid))
-                    print("The Value UUID is : {}\n".format(value_uuid))
+                    print(f"\nI've created your new Tag - {group_type} : {name}\n")
+                    print(f"The Category UUID is : {cat_uuid}\n")
+                    print(f"The Value UUID is : {value_uuid}\n")
             except:
                 pass

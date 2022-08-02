@@ -14,7 +14,6 @@ def user_export():
         user_writer.writerow(header_list)
 
         for user in user_data['users']:
-            user_list = []
             try:
                 name = user['name']
             except KeyError:
@@ -25,10 +24,5 @@ def user_export():
             roles = user['roles']
             fail = user['login_fail_total']
 
-            user_list.append(name)
-            user_list.append(user_name)
-            user_list.append(user_uuid)
-            user_list.append(roles)
-            user_list.append(fail)
-
+            user_list = [name, user_name, user_uuid, roles, fail]
             user_writer.writerow(user_list)

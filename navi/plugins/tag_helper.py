@@ -21,26 +21,28 @@ def update_tag(c, v, tag_list):
         list_tags = grab_all_tags()
 
         for tag_info in list_tags:
-            if str(tag_info[0]).lower() == str(c).lower():
-                if str(tag_info[1]).lower() == str(v).lower():
-
-                    try:
-                        tag_uuid = tag_info[2]
-                        payload = {"action": "add", "assets": tag_list, "tags": [tag_uuid]}
-                        data = request_data('POST', '/tags/assets/assignments', payload=payload)
-                        click.echo("Job UUID : {}".format(data['job_uuid']))
-                    except IndexError:
-                        pass
+            if (
+                str(tag_info[0]).lower() == str(c).lower()
+                and str(tag_info[1]).lower() == str(v).lower()
+            ):
+                try:
+                    tag_uuid = tag_info[2]
+                    payload = {"action": "add", "assets": tag_list, "tags": [tag_uuid]}
+                    data = request_data('POST', '/tags/assets/assignments', payload=payload)
+                    click.echo(f"Job UUID : {data['job_uuid']}")
+                except IndexError:
+                    pass
     except:
         pass
 
 
 def tag_checker(uuid, key, value):
-    data = db_query("SELECT * from tags where asset_uuid='{}' and tag_key='{}' and tag_value='{}';".format(uuid, key, value))
+    data = db_query(
+        f"SELECT * from tags where asset_uuid='{uuid}' and tag_key='{key}' and tag_value='{value}';"
+    )
+
     length = len(data)
-    if length != 0:
-        return 'yes'
-    return 'no'
+    return 'yes' if length != 0 else 'no'
 
 
 def confirm_tag_exists(key, value):
@@ -48,9 +50,11 @@ def confirm_tag_exists(key, value):
         tag_list = grab_all_tags()
 
         for tag_info in tag_list:
-            if str(tag_info[0]).lower() == str(key).lower():
-                if str(tag_info[1]).lower() == str(value).lower():
-                    return 'yes'
+            if (
+                str(tag_info[0]).lower() == str(key).lower()
+                and str(tag_info[1]).lower() == str(value).lower()
+            ):
+                return 'yes'
     except Exception as E:
         click.echo(E)
 

@@ -21,8 +21,14 @@ def tenb_connection():
             for row in rows:
                 access_key = row[0]
                 secret_key = row[1]
-            tio = TenableIO(access_key, secret_key, vendor='Casey Reid', product='navi', build=navi_version())
-            return tio
+            return TenableIO(
+                access_key,
+                secret_key,
+                vendor='Casey Reid',
+                product='navi',
+                build=navi_version(),
+            )
+
     except Error:
         pass
 
@@ -41,7 +47,11 @@ def grab_headers():
         for row in rows:
             access_key = row[0]
             secret_key = row[1]
-    return {'Content-type': 'application/json', 'user-agent': navi_version(), 'X-ApiKeys': 'accessKey=' + access_key + ';secretKey=' + secret_key}
+    return {
+        'Content-type': 'application/json',
+        'user-agent': navi_version(),
+        'X-ApiKeys': f'accessKey={access_key};secretKey={secret_key}',
+    }
 
 
 def request_no_response(method, url_mod, **kwargs):
@@ -66,14 +76,17 @@ def request_no_response(method, url_mod, **kwargs):
         if r.status_code == 200:
             click.echo("Success!\n")
         elif r.status_code == 404:
-            click.echo('\nCheck your query...{}'.format(r))
+            click.echo(f'\nCheck your query...{r}')
         elif r.status_code == 429:
-            click.echo("\nToo many requests at a time...\n {}".format(r))
+            click.echo(f"\nToo many requests at a time...\n {r}")
         elif r.status_code == 400:
-            click.echo("\nCheck your params.  Password complexity is the most common issue\n{}".format(r))
+            click.echo(
+                f"\nCheck your params.  Password complexity is the most common issue\n{r}"
+            )
+
             click.echo()
         else:
-            click.echo("Something went wrong...Don't be trying to hack me now {}".format(r))
+            click.echo(f"Something went wrong...Don't be trying to hack me now {r}")
     except ConnectionError:
         click.echo("Check your connection...You got a connection error")
 
@@ -96,7 +109,7 @@ def request_data(method, url_mod, **kwargs):
         payload = None
 
     # Retry the download three times
-    for x in range(1, 3):
+    for _ in range(1, 3):
         try:
             r = requests.request(method, url + url_mod, headers=grab_headers(), params=params, json=payload, verify=True)
             if r.status_code == 200:
@@ -107,30 +120,32 @@ def request_data(method, url_mod, **kwargs):
                 click.echo("\nSuccess!\n")
                 break
             elif r.status_code == 404:
-                click.echo('\nCheck your query...I can\'t find what you\'re looking for {}'.format(r))
+                click.echo(f"\nCheck your query...I can\'t find what you\'re looking for {r}")
                 return r.json()
             elif r.status_code == 429:
-                click.echo("\nToo many requests at a time...\n{}".format(r))
+                click.echo(f"\nToo many requests at a time...\n{r}")
                 break
             elif r.status_code == 400:
                 click.echo("\nThe object you tried to create may already exist\n")
                 click.echo("If you are changing scan ownership, there is a bug where 'empty' scans won't be moved")
                 break
             elif r.status_code == 403:
-                click.echo("\nYou are not authorized! You need to be an admin\n{}".format(r))
+                click.echo(f"\nYou are not authorized! You need to be an admin\n{r}")
                 break
             elif r.status_code == 409:
                 click.echo("API Returned 409")
                 break
             elif r.status_code == 504:
-                click.echo("\nOne of the Threads and an issue during download...Retrying...\n{}".format(r))
+                click.echo(
+                    f"\nOne of the Threads and an issue during download...Retrying...\n{r}"
+                )
+
                 break
             else:
-                click.echo("Something went wrong...Don't be trying to hack me now {}".format(r))
+                click.echo(f"Something went wrong...Don't be trying to hack me now {r}")
                 break
         except ConnectionError:
             click.echo("Check your connection...You got a connection error. Retying")
             continue
         except JSONDecodeError:
             click.echo("Download Error or User enabled / Disabled ")
-            continue

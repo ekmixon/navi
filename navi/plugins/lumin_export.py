@@ -35,17 +35,17 @@ def lumin_export():
 
             # Loop through each asset
             for assets in data:
-                export_list = []
-                for atr in assets:
-                    # Cycle through the Database and populate the new list
-                    export_list.append(atr)
-
+                export_list = list(assets)
                 asset_id = assets[3]  # Grab the UUID to make API calls
                 try:
                     asset_info = tio.workbenches.asset_info(asset_id)
 
-                    for vuln in asset_info['counts']['vulnerabilities']['severities']:
-                        export_list.append(vuln["count"])  # Add the vuln counts to the new list
+                    export_list.extend(
+                        vuln["count"]
+                        for vuln in asset_info['counts']['vulnerabilities'][
+                            'severities'
+                        ]
+                    )
 
                     for driver in range(3):
                         try:

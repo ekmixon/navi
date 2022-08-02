@@ -13,9 +13,9 @@ def plugin_by_ip(ipaddr, plugin):
             rows = db_query("SELECT output, cves, score, state from vulns where asset_uuid=\"%s\" and plugin_id=%s" % (ipaddr, plugin))
 
         for plug in rows:
-            click.echo("\nCurrent Plugin State: {} ".format(plug[3]))
+            click.echo(f"\nCurrent Plugin State: {plug[3]} ")
             if plug[2] != ' ':
-                click.echo("\nVPR Score: {}".format(plug[2]))
+                click.echo(f"\nVPR Score: {plug[2]}")
 
             click.echo("\nPlugin Output")
             click.echo("-" * 60)
@@ -24,7 +24,7 @@ def plugin_by_ip(ipaddr, plugin):
             if plug[1] != ' ':
                 click.echo("CVEs attached to this plugin")
                 click.echo("-" * 80)
-                click.echo("{}\n".format(plug[1]))
+                click.echo(f"{plug[1]}\n")
         click.echo()
     except IndexError:
         click.echo("No information found for this plugin")
@@ -32,7 +32,10 @@ def plugin_by_ip(ipaddr, plugin):
 
 def vulns_by_uuid(uuid):
     try:
-        data = db_query("select plugin_id, plugin_name, plugin_family, port, protocol, severity, state from vulns where asset_uuid='{}' and severity !='info';".format(uuid))
+        data = db_query(
+            f"select plugin_id, plugin_name, plugin_family, port, protocol, severity, state from vulns where asset_uuid='{uuid}' and severity !='info';"
+        )
+
 
         click.echo("\n{:10s} {:70s} {:35s} {:10s} {:6s} {:6s} {}".format("Plugin", "Plugin Name", "Plugin Family", "state", "Port", "Proto", "Severity"))
         click.echo("-"*150)
@@ -53,7 +56,10 @@ def vulns_by_uuid(uuid):
 
 def info_by_uuid(uuid):
     try:
-        data = db_query("select plugin_id, plugin_name, plugin_family, port, protocol, severity from vulns where asset_uuid='{}' and severity =='info';".format(uuid))
+        data = db_query(
+            f"select plugin_id, plugin_name, plugin_family, port, protocol, severity from vulns where asset_uuid='{uuid}' and severity =='info';"
+        )
+
 
         click.echo("\n{:10s} {:90s} {:25s} {:6s} {:6s} {}".format("Plugin", "Plugin Name", "Plugin Family", "Port", "Proto", "Severity"))
         click.echo("-"*150)
@@ -73,7 +79,10 @@ def info_by_uuid(uuid):
 
 def cves_by_uuid(uuid):
     try:
-        data = db_query("select plugin_id, cves from vulns where asset_uuid='{}' and cves !=' ';".format(uuid))
+        data = db_query(
+            f"select plugin_id, cves from vulns where asset_uuid='{uuid}' and cves !=' ';"
+        )
+
 
         click.echo("\n{:10s} {}".format("Plugin", "CVEs"))
         click.echo("-"*150)

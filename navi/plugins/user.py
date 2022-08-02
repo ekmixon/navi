@@ -4,25 +4,26 @@ from .api_wrapper import request_data, request_no_response
 
 def create_user(username, password, permission, name, email):
 
-    payload = {"username": "{}".format(str(username)), "password": str(password), "permissions": permission, "name": name, "email": "{}".format(str(email))}
+    payload = {
+        "username": f"{str(username)}",
+        "password": str(password),
+        "permissions": permission,
+        "name": name,
+        "email": f"{str(email)}",
+    }
 
-    data = request_no_response("POST", "/users", payload=payload)
 
-    return data
+    return request_no_response("POST", "/users", payload=payload)
 
 
 def enable_disable_user(user_id, answer):
 
-    if answer == "enable":
-        payload = {"enabled": True}
-    else:
-        payload = {"enabled": False}
-
-    request_no_response("PUT", "/users/" + str(user_id) + "/enabled", payload=payload)
+    payload = {"enabled": True} if answer == "enable" else {"enabled": False}
+    request_no_response("PUT", f"/users/{str(user_id)}/enabled", payload=payload)
 
 
 def change_auth_settings(user_id, payload):
-    request_no_response("PUT", "/users/{}/authorizations".format(user_id), payload=payload)
+    request_no_response("PUT", f"/users/{user_id}/authorizations", payload=payload)
 
 
 def get_user_id(username):

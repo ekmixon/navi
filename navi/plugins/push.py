@@ -23,7 +23,7 @@ def send_command(shell, cmd, quick):
 
 def connect(user, host, password):
     ssh_new_key_string = 'Are you sure you want to continue connecting'
-    ssh_login_string = 'ssh {}@{}'.format(user, host)
+    ssh_login_string = f'ssh {user}@{host}'
 
     shell = pexpect.spawn(ssh_login_string)
 
@@ -48,7 +48,7 @@ def connect(user, host, password):
 
 def scp(user, host, password, filename):
     ssh_new_key_string = 'Are you sure you want to continue connecting'
-    scp_login_string = 'scp {} {}@{}:/'.format(filename, user, host)
+    scp_login_string = f'scp {filename} {user}@{host}:/'
 
     shell = pexpect.spawn(scp_login_string)
 
@@ -95,9 +95,9 @@ def push(command, target, wait, file):
                 send_command(shell, command, quick=1)
 
     except Exception as E:
-        click.echo("Please use the 'navi ssh' command to enter your ssh credentials\n "
-                   "If you have, then this host may not be a Linux machine or your Credentials are not working\n"
-                   "Here is the Error: {}".format(E))
+        click.echo(
+            f"Please use the 'navi ssh' command to enter your ssh credentials\n If you have, then this host may not be a Linux machine or your Credentials are not working\nHere is the Error: {E}"
+        )
 
 
 

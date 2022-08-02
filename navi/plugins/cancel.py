@@ -10,9 +10,9 @@ def cancel(uuid, a, v):
     if not a and not v:
         click.echo("\n You need to signify which export type: '-a' or '-v'")
     if a:
-        asset_response = request_data('POST', '/assets/export/{}/cancel'.format(uuid))
+        asset_response = request_data('POST', f'/assets/export/{uuid}/cancel')
         click.echo(asset_response)
 
     if v:
-        vuln_response = request_data('POST', '/vulns/export/{}/cancel'.format(uuid))
+        vuln_response = request_data('POST', f'/vulns/export/{uuid}/cancel')
         click.echo(vuln_response)

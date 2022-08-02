@@ -108,4 +108,4 @@ sys('navi tag --c "Credential Issues" --v "Cred Failure" --plugin 104410 >> tag_
 sys('navi tag --c "Credential Issues" --v "General Failure" --plugin 21745 >> tag_navi.log')
 end = time.time()
 
-print("This script took: " + str((end-start)/60) + "Minutes")
+print(f"This script took: {str((end-start)/60)}Minutes")

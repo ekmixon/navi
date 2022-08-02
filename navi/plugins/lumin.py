@@ -49,7 +49,7 @@ def lumin(acr, v, c, note, business,  compliance, mitigation, development):
                 lumin_list.append(uuid)
 
         for asset_uuid in lumin_list:
-            note = note + " - navi"
+            note = f"{note} - navi"
             lumin_payload = [{"acr_score": int(acr), "reason": choice, "note": note, "asset": [{"id": asset_uuid}]}]
             request_data('POST', '/api/v2/assets/bulk-jobs/acr', payload=lumin_payload)
 

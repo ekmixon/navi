@@ -50,7 +50,7 @@ def create_was_scan(owner_id, temp_id, scanner_id, target, name):
         }
     )
 
-    request_data('PUT', '/was/v2/configs/' + str(was_uuid), payload=payload)
+    request_data('PUT', f'/was/v2/configs/{str(was_uuid)}', payload=payload)
     return
 
 
@@ -92,14 +92,17 @@ def scans():
 @click.argument('scan_id')
 def start(scan_id):
     click.echo("\n Your Scan is starting")
-    request_data('POST', '/was/v2/configs/' + str(scan_id) + '/scans')
+    request_data('POST', f'/was/v2/configs/{str(scan_id)}/scans')
 
 
 @was.command(help="Display Details for Web Application Scan")
 @click.argument('scan_id')
 def details(scan_id):
     try:
-        detail_report_data = request_data('GET', '/was/v2/scans/' + str(scan_id) + '/report')
+        detail_report_data = request_data(
+            'GET', f'/was/v2/scans/{str(scan_id)}/report'
+        )
+
         detail_high = []
         detail_meduim = []
         detail_low = []
@@ -125,10 +128,10 @@ def details(scan_id):
             owasp_api = ' '
             if detail_risk == 'high':
                 detail_high.append(detail_plugin_id)
-            elif detail_risk == 'medium':
-                detail_meduim.append(detail_plugin_id)
             elif detail_risk == 'low':
                 detail_low.append(detail_plugin_id)
+            elif detail_risk == 'medium':
+                detail_meduim.append(detail_plugin_id)
             try:
                 cvss = detail_finding['cvss']
             except KeyError:
@@ -153,9 +156,9 @@ def details(scan_id):
 
         click.echo("\nSeverity Counts")
         click.echo("-" * 20)
-        click.echo("High: {}".format(len(detail_high)))
-        click.echo("Medium: {}".format(len(detail_meduim)))
-        click.echo("Low: {}".format(len(detail_low)))
+        click.echo(f"High: {len(detail_high)}")
+        click.echo(f"Medium: {len(detail_meduim)}")
+        click.echo(f"Low: {len(detail_low)}")
         click.echo()
     except KeyError:
         pass
@@ -196,14 +199,14 @@ def scan(scan_target, file):
     # Capture User UUID selection
     user_uuid = input("Select an Scan owner using the UUID ?.... ")
 
-    scan_name = "navi Created Scan of : " + str(scan_target)
+    scan_name = f"navi Created Scan of : {str(scan_target)}"
 
     if file:
         with open(scan_target, 'r', newline='') as csv_file:
             web_apps = csv.reader(csv_file)
             for apps in web_apps:
                 for app in apps:
-                    scan_name = "navi Created Scan of : " + str(app)
+                    scan_name = f"navi Created Scan of : {str(app)}"
                     # strip for white spaces
                     application = app.strip()
                     create_was_scan(owner_id=user_uuid, scanner_id=scanner_id, name=scan_name, temp_id=template, target=application)
@@ -224,15 +227,22 @@ def configs():
             updated = config['last_scan']['updated_at']
         except TypeError:
             updated = "Not Run yet"
-        click.echo("{:80s} {:40s} {}".format(textwrap.shorten(str(config['name']), width=80), str(config['config_id']), str(updated)))
+        click.echo(
+            "{:80s} {:40s} {}".format(
+                textwrap.shorten(str(config['name']), width=80),
+                str(config['config_id']),
+                updated,
+            )
+        )
+
     click.echo()
 
 
 @was.command(help="Display Statistics for Web Application Scan")
 @click.argument('scan_id')
 def stats(scan_id):
-    scan_metadata = request_data('GET', '/was/v2/scans/' + str(scan_id))
-    report = request_data('GET', '/was/v2/scans/' + str(scan_id) + '/report')
+    scan_metadata = request_data('GET', f'/was/v2/scans/{str(scan_id)}')
+    report = request_data('GET', f'/was/v2/scans/{str(scan_id)}/report')
     high = []
     medium = []
     low = []
@@ -256,7 +266,7 @@ def stats(scan_id):
     click.echo("-" * 60)
     for note in report['notes']:
         click.echo(note['title'])
-        click.echo("\t- {}".format(note['message']))
+        click.echo(f"\t- {note['message']}")
 
     click.echo("\nScan Data Available")
     click.echo("-" * 40)
@@ -287,9 +297,9 @@ def stats(scan_id):
     except TypeError:
         pages_audited = 0
 
-    click.echo("Requests Made: {}".format(requests_made))
-    click.echo("Pages Crawled: {}".format(pages_crawled))
-    click.echo("Pages Audited: {}".format(pages_audited))
+    click.echo(f"Requests Made: {requests_made}")
+    click.echo(f"Pages Crawled: {pages_crawled}")
+    click.echo(f"Pages Audited: {pages_audited}")
 
     for finding in report['findings']:
         risk = finding['risk_factor']
@@ -300,16 +310,16 @@ def stats(scan_id):
 
         if risk == 'high':
             high.append(plugin_id)
-        elif risk == 'medium':
-            medium.append(plugin_id)
         elif risk == 'low':
             low.append(plugin_id)
 
+        elif risk == 'medium':
+            medium.append(plugin_id)
     click.echo("\nSeverity Counts")
     click.echo("-"*20)
-    click.echo("High: {}".format(len(high)))
-    click.echo("Medium: {}".format(len(medium)))
-    click.echo("Low: {}".format(len(low)))
+    click.echo(f"High: {len(high)}")
+    click.echo(f"Medium: {len(medium)}")
+    click.echo(f"Low: {len(low)}")
     click.echo("\nScan Statistics")
     click.echo("-" * 20)
     click.echo(output)
@@ -339,7 +349,7 @@ def summary():
             finish_epoch = parsed_time.timestamp()
 
             if finish_epoch > target_time:
-                report = request_data('GET', '/was/v2/scans/' + was_scan_id + '/report')
+                report = request_data('GET', f'/was/v2/scans/{was_scan_id}/report')
                 high = []
                 medium = []
                 low = []
@@ -355,11 +365,11 @@ def summary():
                         plugin_id = finding['plugin_id']
                         if risk == 'high':
                             high.append(plugin_id)
-                        elif risk == 'medium':
-                            medium.append(plugin_id)
                         elif risk == 'low':
                             low.append(plugin_id)
 
+                        elif risk == 'medium':
+                            medium.append(plugin_id)
                     click.echo("{:38s} {:60s} {:6s} {:6s} {:6s} {:27s}".format(textwrap.shorten(str(name), width=38),
                                                                                textwrap.shorten(str(target), width=60),
                                                                                str(len(high)), str(len(medium)),
@@ -404,4 +414,6 @@ def reporter(yes):
         access_key = keys[0]
         secret_key = keys[1]
 
-    os.system("docker run -it -e 'access_key={}' -e 'secret_key={}' -p 5004:5004 silentninja/navi:was".format(access_key, secret_key))
+    os.system(
+        f"docker run -it -e 'access_key={access_key}' -e 'secret_key={secret_key}' -p 5004:5004 silentninja/navi:was"
+    )

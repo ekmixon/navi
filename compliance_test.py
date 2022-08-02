@@ -4,7 +4,11 @@ import requests
 def grab_headers():
     access_key = '697cbb12a358606c673c95ccd8c8a8b23a2c7fe6cdfbc8804ce45714cbeaad1e'
     secret_key = '7457773f3d09c94e9c34308e8da54be9247f220f8ed8bcda59b6c17507ca3536'
-    return {'Content-type': 'application/json', 'user-agent': 'Casey Reid', 'X-ApiKeys': 'accessKey=' + access_key + ';secretKey=' + secret_key}
+    return {
+        'Content-type': 'application/json',
+        'user-agent': 'Casey Reid',
+        'X-ApiKeys': f'accessKey={access_key};secretKey={secret_key}',
+    }
 
 
 def request_export():

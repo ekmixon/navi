@@ -4,10 +4,16 @@ from .api_wrapper import request_data
 def webscan(targets, scanner_id, template):
 
     # create the scan payload based on the answers we received
-    payload = dict(uuid=template, settings={"name": "Scripted Web App Scan of: " + str(targets),
-                                            "enabled": "true",
-                                            "scanner_id": scanner_id,
-                                            "text_targets": targets})
+    payload = dict(
+        uuid=template,
+        settings={
+            "name": f"Scripted Web App Scan of: {str(targets)}",
+            "enabled": "true",
+            "scanner_id": scanner_id,
+            "text_targets": targets,
+        },
+    )
+
     # setup the scan
     scan_data = request_data('POST', '/scans', payload=payload)
 

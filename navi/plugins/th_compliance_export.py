@@ -131,9 +131,9 @@ def parse_data(chunk_data, chunk_number):
                     click.echo("skipped one")
         except TypeError:
             click.echo("Your Export has no data.  It may have expired")
-            click.echo("Error on Chunk {}".format(chunk_number))
+            click.echo(f"Error on Chunk {chunk_number}")
 
-    click.echo("Chunk {} Finished".format(chunk_number))
+    click.echo(f"Chunk {chunk_number} Finished")
     comply_conn.close()
 
 
@@ -165,36 +165,30 @@ def compliance_export(days, ex_uuid, threads):
 
             # grab the export UUID
             ex_uuid = export['export_uuid']
-            click.echo('\nRequesting Compliance Export with ID : {}'.format(ex_uuid))
+            click.echo(f'\nRequesting Compliance Export with ID : {ex_uuid}')
 
-            # set a variable to True for our While loop
-            not_ready = True
         else:
             click.echo("\nUsing your Export UUID\n")
-            not_ready = True
-
+        # set a variable to True for our While loop
+        not_ready = True
         # now check the status
-        status = request_data('GET', '/compliance/export/' + ex_uuid + '/status')
+        status = request_data('GET', f'/compliance/export/{ex_uuid}/status')
 
         # status
-        click.echo("Status : {}".format(str(status["status"])))
+        click.echo(f'Status : {str(status["status"])}')
 
         # loop to check status until finished
-        while not_ready is True:
-            # Pull the status, then pause 5 seconds and ask again.
-            if status['status'] == 'PROCESSING' or 'QUEUED':
-                time.sleep(2.5)
-                status = request_data('GET', '/compliance/export/' + ex_uuid + '/status')
-                # click.echo("Status : " + str(status["status"]))
-
+        while not_ready:
+            time.sleep(2.5)
+            status = request_data('GET', f'/compliance/export/{ex_uuid}/status')
             # Exit Loop once confirmed finished
             if status['status'] == 'FINISHED':
                 ptime = time.time()
-                click.echo("\nProcessing Time took : {}".format(str(ptime - start)))
+                click.echo(f"\nProcessing Time took : {str(ptime - start)}")
 
                 # Display how many chunks there are
                 avail = len(status['chunks_available'])
-                click.echo("\nChunks Available - {}".format(avail))
+                click.echo(f"\nChunks Available - {avail}")
                 click.echo("Downloading chunks now...hold tight...This can take some time\n")
                 not_ready = False
 
@@ -204,20 +198,22 @@ def compliance_export(days, ex_uuid, threads):
                 exit()
 
         # grab all of the chunks and craft the URLS for threading
-        for y in status['chunks_available']:
-            urls.append('/compliance/export/' + ex_uuid + '/chunks/' + str(y))
+        urls.extend(
+            f'/compliance/export/{ex_uuid}/chunks/{str(y)}'
+            for y in status['chunks_available']
+        )
 
-        for i in range(threads):
+        for _ in range(threads):
             t = threading.Thread(target=worker)
             t.daemon = True  # thread dies when main thread (only non-daemon thread) exits.
             t.start()
 
-        for item in range(len(urls)):
-            q.put(urls[item])
+        for url in urls:
+            q.put(url)
 
         q.join()
         end = time.time()
-        click.echo("Compliance Update Time took : {}\n".format(str(end - start)))
+        click.echo(f"Compliance Update Time took : {str(end - start)}\n")
 
     except KeyError:
         click.echo("Well this is a bummer; you don't have permissions to download Asset data :( ")
